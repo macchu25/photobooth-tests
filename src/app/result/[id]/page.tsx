@@ -43,37 +43,39 @@ export default function ResultPage() {
         </div>
 
         {/* RIGHT: QR and Actions */}
-        <div className="w-full lg:w-[400px] flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 shrink-0">
+        <div className="w-full lg:w-[450px] flex flex-col items-center text-center space-y-8 shrink-0">
           <div className="space-y-2">
-            <div className="flex items-center gap-3 justify-center lg:justify-start text-emerald-500">
-              <CheckCircle2 size={24} />
-              <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase leading-none">SUCCESS!</h2>
+            <div className="flex items-center gap-3 justify-center text-emerald-500">
+              <CheckCircle2 size={32} />
+              <h2 className="text-5xl font-black italic tracking-tighter uppercase leading-none">SUCCESS!</h2>
             </div>
-            <p className="text-neutral-500 text-xs uppercase tracking-[0.4em] font-black">Digital Copy Ready</p>
+            <p className="text-neutral-500 text-[10px] uppercase tracking-[0.5em] font-black">Digital Vault Protected</p>
           </div>
 
-          <div className="bg-white p-6 md:p-8 rounded-[3.5rem] shadow-2xl ring-1 ring-white/10 inline-block overflow-hidden">
-            {origin && <QRCodeSVG value={`${origin}/view/${id}`} size={220} level="H" includeMargin />}
-          </div>
+          <div className="flex flex-col items-center space-y-8 w-full max-w-[320px]">
+            <div className="bg-white p-6 rounded-[3.5rem] shadow-2xl ring-1 ring-white/10 overflow-hidden">
+              {origin && <QRCodeSVG value={`${origin}/view/${id}`} size={240} level="H" includeMargin />}
+            </div>
 
-          <div className="space-y-4 w-full">
-            <button 
-              onClick={() => window.print()} 
-              className="w-full bg-white text-black py-5 rounded-[1.5rem] font-black uppercase flex items-center justify-center gap-3 hover:scale-105 transition-all text-sm shadow-xl"
-            >
-              <Printer size={18} /> Print Memories
-            </button>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <button className="bg-neutral-900 border border-white/5 py-4 rounded-[1.2rem] font-black uppercase text-[8px] tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all opacity-30">
-                <Download size={14} /> Download
-              </button>
+            <div className="space-y-4 w-full">
               <button 
-                onClick={() => router.push("/")} 
-                className="bg-indigo-600 py-4 rounded-[1.2rem] font-black uppercase text-[8px] tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all italic italic tracking-wider"
+                onClick={() => window.print()} 
+                className="w-full bg-white text-black py-5 rounded-[1.5rem] font-black uppercase flex items-center justify-center gap-3 hover:scale-105 transition-all text-sm shadow-xl italic"
               >
-                <RotateCcw size={14} /> New Shot
+                <Printer size={18} /> Print Memories
               </button>
+              
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <button className="bg-neutral-900 border border-white/5 py-4 rounded-[1.2rem] font-black uppercase text-[8px] tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all opacity-30">
+                  <Download size={14} /> Download
+                </button>
+                <button 
+                  onClick={() => router.push("/")} 
+                  className="bg-indigo-600 py-4 rounded-[1.2rem] font-black uppercase text-[8px] tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all italic tracking-wider"
+                >
+                  <RotateCcw size={14} /> New Shot
+                </button>
+              </div>
             </div>
           </div>
         </div>
