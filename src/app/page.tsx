@@ -102,16 +102,10 @@ export default function Photobooth() {
       }
 
       try {
-        const constraints = {
-          video: { 
-            width: { ideal: 1280 }, 
-            height: { ideal: 720 },
-            facingMode: "user" 
-          },
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
           audio: false
-        };
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           // Ensure it plays
@@ -245,9 +239,21 @@ export default function Photobooth() {
           <div className="relative flex-1 bg-neutral-900 rounded-[3rem] overflow-hidden border border-white/10">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             <canvas ref={canvasRef} className="hidden" />
-            {step === "READY" && (
+            
+            {cameraError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-black/90 z-20">
+                <div className="text-red-500 mb-4 bg-red-500/10 p-4 rounded-full">
+                  <X size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2">CAMERA NOT DETECTED</h3>
+                <p className="text-neutral-400 max-w-sm mb-6">{cameraError}</p>
+                <button onClick={() => window.location.reload()} className="px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition">Try Again</button>
+              </div>
+            )}
+
+            {step === "READY" && !cameraError && (
               <div className="absolute bottom-12 inset-x-0 flex justify-center">
-                <button onClick={() => { setCountdown(3); setStep("COUNTDOWN"); }} className="w-28 h-28 bg-white rounded-full border-[10px] border-black/30 shadow-2xl hover:scale-105 active:scale-95 transition-all" />
+                <button onClick={() => { setCountdown(3); setStep("COUNTDOWN"); }} className="w-28 h-28 bg-white rounded-full border-[10px] border-black/30 shadow-2xl hover:scale-105 active:scale-90 transition-all" />
               </div>
             )}
             {step === "COUNTDOWN" && <div className="absolute inset-0 flex items-center justify-center text-[20rem] font-black">{countdown}</div>}
