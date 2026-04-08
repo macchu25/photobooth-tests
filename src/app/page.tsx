@@ -96,14 +96,38 @@ export default function Photobooth() {
 
   useEffect(() => {
     async function setupCamera() {
+      if (typeof window === "undefined" || !navigator.mediaDevices) {
+        setCameraError("Camera API not supported in this browser/environment.");
+        return;
+      }
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+        const constraints = {
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: "user" 
+          },
           audio: false
-        });
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        };
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          // Ensure it plays
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.error("Auto-play failed:", e));
+          };
+        }
       } catch (err: any) {
-        setCameraError(err.message);
+        console.error("Camera access error:", err);
+        if (err.name === "NotAllowedError") {
+          setCameraError("Permission Denied: Please allow camera access in your browser settings.");
+        } else if (err.name === "NotFoundError") {
+          setCameraError("No camera found. Please connect a camera or capture card.");
+        } else {
+          setCameraError(`Camera Error: ${err.message || "Unknown error"}`);
+        }
       }
     }
     setupCamera();
