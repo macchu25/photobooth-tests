@@ -1,5 +1,5 @@
 "use client";
-// Photobooth v4 - Dynamic Layouts (Strip & Grid)
+// Photobooth v5 - Scrollable & Print Composition View
 
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
@@ -29,13 +29,13 @@ import {
   ChevronRight,
   RotateCcw,
   LayoutGrid,
-  Columns
+  Columns,
+  Download,
+  Printer
 } from "lucide-react";
 
 type Step = "IDLE" | "PACKAGE_SELECT" | "READY" | "COUNTDOWN" | "FLASH" | "DESIGN" | "SAVING" | "RESULT";
 type Layout = "GRID" | "STRIP";
-
-// --- Components ---
 
 function DraggableThumb({ id, src }: { id: string, src: string }) {
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({ id });
@@ -46,19 +46,21 @@ function DraggableThumb({ id, src }: { id: string, src: string }) {
   );
 }
 
-function DroppableSlot({ id, photoSrc, onClear, isStrip }: { id: string, photoSrc?: string, onClear: () => void, isStrip?: boolean }) {
+function DroppableSlot({ id, photoSrc, onClear, isStrip }: { id: string, photoSrc?: string, onClear?: () => void, isStrip?: boolean }) {
   const { isOver, setNodeRef } = useDroppable({ id });
   return (
-    <div ref={setNodeRef} className={`relative ${isStrip ? "aspect-[3/2]" : "aspect-square"} rounded-xl transition-all border-2 flex items-center justify-center overflow-hidden ${isOver ? "border-indigo-500 bg-indigo-500/20" : "border-white/10 bg-black/40"} ${photoSrc ? "shadow-2xl" : "border-dashed opacity-40"}`}>
+    <div ref={setNodeRef} className={`relative ${isStrip ? "aspect-[3/2]" : "aspect-square"} rounded-xl transition-all border-2 flex items-center justify-center overflow-hidden ${isOver ? "border-indigo-500 bg-indigo-500/10" : "border-white/5 bg-black/20"} ${photoSrc ? "shadow-lg" : "border-dashed opacity-20"}`}>
       {photoSrc ? (
         <>
           <img src={photoSrc} className="w-full h-full object-cover" alt="Framed" />
-          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors">
-            <X size={12} />
-          </button>
+          {onClear && (
+            <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white hover:bg-red-500 transition-colors">
+              <X size={10} />
+            </button>
+          )}
         </>
       ) : (
-        <Camera size={20} className="opacity-10" />
+        <Camera size={16} className="opacity-10 text-black" />
       )}
     </div>
   );
@@ -159,23 +161,23 @@ export default function Photobooth() {
   };
 
   return (
-    <main className="fixed inset-0 bg-[#0a0a0a] text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none">
+    <main className="min-h-screen bg-[#050505] text-white flex flex-col items-center overflow-x-hidden font-sans scroll-smooth">
       
-      {/* Background Ambience */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <video ref={(el) => { if (el && videoRef.current?.srcObject) el.srcObject = videoRef.current.srcObject; }} autoPlay playsInline muted className="w-full h-full object-cover blur-[100px] opacity-30 scale-110" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+      {/* Background stays sticky */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <video ref={(el) => { if (el && videoRef.current?.srcObject) el.srcObject = videoRef.current.srcObject; }} autoPlay playsInline muted className="w-full h-full object-cover blur-[120px] opacity-20 scale-110" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black" />
       </div>
 
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-6 md:p-12">
+      <div className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center p-6 md:p-12">
         
         {step === "IDLE" && (
-          <div className="text-center animate-in fade-in zoom-in duration-1000">
-            <h1 className="text-8xl md:text-[12rem] font-black tracking-tighter italic mb-4 drop-shadow-[0_20px_50px_rgba(255,255,255,0.1)]">PROBOOTH</h1>
-            <p className="text-xl text-neutral-500 tracking-[0.4em] uppercase mb-16">The Ultimate Photobooth Engine</p>
+          <div className="text-center animate-in fade-in zoom-in duration-1000 py-20">
+            <h1 className="text-8xl md:text-[14rem] font-black tracking-tighter italic mb-4 drop-shadow-[0_20px_60px_rgba(255,255,255,0.15)]">PROBOOTH</h1>
+            <p className="text-xl text-neutral-500 tracking-[0.6em] uppercase mb-20 font-light">Cinematic Capture Engine</p>
             <button 
               onClick={() => setStep("PACKAGE_SELECT")} 
-              className="bg-white text-black px-24 py-10 rounded-full font-black text-4xl hover:scale-110 hover:shadow-white/20 hover:shadow-2xl active:scale-95 transition-all shadow-xl"
+              className="bg-white text-black px-24 py-10 rounded-full font-black text-4xl hover:scale-110 hover:shadow-[0_0_80px_rgba(255,255,255,0.3)] active:scale-95 transition-all duration-500 shadow-2xl"
             >
               START
             </button>
@@ -183,105 +185,94 @@ export default function Photobooth() {
         )}
 
         {step === "PACKAGE_SELECT" && (
-          <div className="text-center w-full max-w-5xl animate-in fade-in slide-in-from-bottom-12">
-            <h2 className="text-6xl font-black mb-16 italic tracking-tight uppercase">Select Session</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center w-full max-w-6xl animate-in fade-in slide-in-from-bottom-12 py-10">
+            <h2 className="text-5xl md:text-7xl font-black mb-20 italic italic tracking-tight uppercase">Sessions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
               {[4, 6, 8].map(n => (
                 <button 
                   key={n} 
                   onClick={() => startPackage(n)} 
-                  className="group relative bg-neutral-900/50 backdrop-blur-2xl border border-white/5 p-16 rounded-[4rem] hover:border-white transition-all overflow-hidden"
+                  className="group relative bg-neutral-900 border border-white/5 p-16 rounded-[4rem] hover:border-white transition-all overflow-hidden"
                 >
-                  <div className="absolute -right-10 -bottom-10 text-white/5 text-[15rem] font-black group-hover:text-white/10 transition-colors">{n}</div>
-                  <div className="text-9xl font-black text-neutral-600 group-hover:text-white transition-colors relative z-10">{n}</div>
-                  <div className="text-sm uppercase font-black tracking-widest text-neutral-500 relative z-10">Photos Included</div>
+                  <div className="absolute -right-10 -bottom-10 text-white/5 text-[18rem] font-black group-hover:text-white/10 transition-colors pointer-events-none">{n}</div>
+                  <div className="text-9xl font-black text-neutral-600 group-hover:text-white transition-colors relative z-10 leading-none">{n}</div>
+                  <div className="text-sm uppercase font-black tracking-[0.3em] text-neutral-500 relative z-10 mt-6">Capture Studio</div>
                 </button>
               ))}
             </div>
-            <button onClick={() => setStep("IDLE")} className="mt-16 text-neutral-500 hover:text-white flex items-center gap-2 mx-auto uppercase text-xs tracking-widest transition-all"><RotateCcw size={16} /> Back to Welcome</button>
+            <button onClick={() => setStep("IDLE")} className="mt-20 text-neutral-500 hover:text-white flex items-center gap-2 mx-auto uppercase text-xs tracking-widest transition-all"><RotateCcw size={16} /> Back</button>
           </div>
         )}
 
         {(step === "READY" || step === "COUNTDOWN" || step === "FLASH") && (
-          <div className="w-full h-full max-w-5xl flex flex-col animate-in fade-in duration-500">
-            <div className="flex justify-between items-end mb-6">
-              <div className="flex items-center gap-4">
+          <div className="w-full h-full max-w-5xl flex flex-col items-center animate-in fade-in duration-500 py-10">
+            <div className="w-full flex justify-between items-center mb-8 px-4 font-black text-neutral-500 tracking-[0.2em] italic">
+              <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(239,68,68,1)]" />
-                <h3 className="text-2xl font-black italic">PHASE {capturedPhotos.length + 1} OF {maxPhotos}</h3>
+                <span>PHASE {capturedPhotos.length + 1} // {maxPhotos}</span>
               </div>
-              <button onClick={() => setStep("IDLE")} className="text-neutral-500 hover:text-white uppercase font-black text-xs tracking-[0.3em]">Cancel</button>
+              <button onClick={() => setStep("IDLE")} className="text-sm uppercase border border-white/10 px-6 py-2 rounded-full">Abort</button>
             </div>
-            <div className="relative flex-1 bg-neutral-900 rounded-[3.5rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-4 border-white/5">
+            <div className="relative w-full aspect-[4/3] md:aspect-video bg-neutral-900 rounded-[4rem] overflow-hidden shadow-[0_60px_100px_-20px_rgba(0,0,0,1)] border-4 border-white/5">
               <video 
                 autoPlay playsInline muted 
-                className="w-full h-full object-cover grayscale-[0.3] contrast-[1.1]"
+                className="w-full h-full object-cover grayscale-[0.2] contrast-[1.1]"
                 ref={(el) => { if (el && videoRef.current?.srcObject) el.srcObject = videoRef.current.srcObject; }}
               />
               <canvas ref={canvasRef} className="hidden" />
               
               {step === "READY" && (
                 <div className="absolute bottom-12 inset-x-0 flex justify-center">
-                  <button onClick={() => { setCountdown(3); setStep("COUNTDOWN"); }} className="group relative w-28 h-28 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-white rounded-full scale-100 group-hover:scale-110 transition-transform duration-500" />
+                  <button onClick={() => { setCountdown(3); setStep("COUNTDOWN"); }} className="group relative w-32 h-32 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-white rounded-full scale-100 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_60px_rgba(255,255,255,0.4)]" />
                     <div className="absolute inset-2 bg-black/10 rounded-full border-4 border-black/20" />
                   </button>
                 </div>
               )}
-              {step === "COUNTDOWN" && <div className="absolute inset-0 flex items-center justify-center text-[22rem] font-black italic animate-in zoom-in duration-300 pointer-events-none">{countdown}</div>}
+              {step === "COUNTDOWN" && <div className="absolute inset-0 flex items-center justify-center text-[25rem] font-black italic animate-in zoom-in duration-300 select-none">{countdown}</div>}
               {step === "FLASH" && <div className="absolute inset-0 bg-white z-50 animate-out fade-out duration-300" />}
             </div>
           </div>
         )}
 
         {step === "DESIGN" && (
-          <div className="w-full h-full flex flex-col md:flex-row gap-10 overflow-hidden animate-in fade-in slide-in-from-right-12">
+          <div className="w-full max-w-7xl flex flex-col md:flex-row gap-12 py-20 animate-in fade-in slide-in-from-right-12">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-              {/* Pool of photos */}
-              <div className="flex-1 flex flex-col min-h-0 bg-neutral-900/60 backdrop-blur-3xl rounded-[3.5rem] p-10 border border-white/5">
-                <div className="flex justify-between items-end mb-10">
+              <div className="flex-1 flex flex-col bg-neutral-950/80 backdrop-blur-3xl rounded-[4rem] p-12 border border-white/5 h-fit min-h-[600px]">
+                <div className="flex justify-between items-end mb-12">
                   <div>
-                    <h2 className="text-4xl font-black italic mb-2 tracking-tight">SHOT GALLERY</h2>
-                    <p className="text-neutral-500 text-sm tracking-wide">Drag your favorite moments into the frame.</p>
+                    <h2 className="text-5xl font-black italic mb-2">CUSTOMIZE</h2>
+                    <p className="text-neutral-500 text-sm tracking-wide">Select your photos and arrange them in the strip.</p>
                   </div>
-                  {/* Layout Toggle */}
-                  <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/5">
+                  <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/5 scale-90 origin-right">
                     <button onClick={() => setLayout("GRID")} className={`px-6 py-2.5 rounded-xl flex items-center gap-2 text-xs font-black uppercase transition-all ${layout === "GRID" ? "bg-white text-black" : "text-neutral-500"}`}><LayoutGrid size={14} /> Grid</button>
                     <button onClick={() => setLayout("STRIP")} className={`px-6 py-2.5 rounded-xl flex items-center gap-2 text-xs font-black uppercase transition-all ${layout === "STRIP" ? "bg-white text-black" : "text-neutral-500"}`}><Columns size={14} /> Strip</button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 scrollbar-hide">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                   {capturedPhotos.map(p => <DraggableThumb key={p.id} id={p.id} src={p.src} />)}
                 </div>
               </div>
 
-              {/* Composition */}
-              <div className="w-full md:w-[350px] lg:w-[420px] flex flex-col shrink-0">
-                <div className={`bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-700 ${layout === "STRIP" ? "max-h-full overflow-y-auto scrollbar-hide" : "aspect-[3/4]"}`}>
-                  <div className="text-black font-black text-center text-[10px] tracking-[0.5em] border-b-2 border-black/5 pb-8 mb-6 uppercase italic opacity-30">The ProBooth Series</div>
-                  
-                  <div className={`grid gap-4 ${layout === "GRID" ? (maxPhotos <= 4 ? "grid-cols-2" : "grid-cols-2") : "grid-cols-1"}`}>
+              <div className="w-full md:w-[400px] flex flex-col shrink-0">
+                <div className={`bg-white p-10 rounded-[3rem] shadow-2xl flex flex-col relative transition-all duration-700`}>
+                  <div className="text-black font-black text-center text-[11px] tracking-[0.5em] border-b-2 border-black/5 pb-8 mb-8 uppercase italic opacity-40 leading-none">The ProBooth Experience</div>
+                  <div className={`grid gap-4 ${layout === "GRID" ? "grid-cols-2" : "grid-cols-1"}`}>
                     {frameSlots.map((src, i) => (
                       <DroppableSlot key={i} id={`slot-${i}`} photoSrc={src} isStrip={layout === "STRIP"} onClear={() => {
                         const n = [...frameSlots]; n[i] = undefined; setFrameSlots(n);
                       }} />
                     ))}
                   </div>
-
-                  <div className="text-black text-[9px] text-center pt-8 opacity-20 font-mono tracking-widest uppercase">Certified Studio Capture // {new Date().getFullYear()}</div>
+                  <div className="text-black text-[9px] text-center pt-10 opacity-20 font-mono tracking-widest uppercase">Verified Studio Composition // {new Date().toLocaleDateString()}</div>
                 </div>
-                <button 
-                  onClick={finalizeDesign} 
-                  disabled={frameSlots.every(s => !s)} 
-                  className="mt-8 w-full bg-indigo-600 disabled:opacity-20 py-8 rounded-[2rem] font-black text-2xl hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-3"
-                >
-                  FINALIZE <ChevronRight />
-                </button>
+                <button onClick={finalizeDesign} disabled={frameSlots.every(s => !s)} className="mt-10 w-full bg-indigo-600 disabled:opacity-20 py-10 rounded-[2.5rem] font-black text-3xl hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-4">PREVIEW <ChevronRight /></button>
               </div>
 
               <DragOverlay>
                 {activeId ? (
-                  <div className="w-44 aspect-[3/2] rounded-2xl overflow-hidden border-4 border-indigo-500 shadow-2xl scale-110 rotate-2 ring-12 ring-indigo-500/10">
-                    <img src={capturedPhotos.find(p => p.id === activeId)?.src} className="w-full h-full object-cover" alt="Dragging" />
+                  <div className="w-48 aspect-[3/2] rounded-2xl overflow-hidden border-4 border-indigo-500 shadow-2xl scale-110 -rotate-2 ring-12 ring-indigo-500/10">
+                    <img src={capturedPhotos.find(p => p.id === activeId)?.src} className="w-full h-full object-cover" />
                   </div>
                 ) : null}
               </DragOverlay>
@@ -290,44 +281,63 @@ export default function Photobooth() {
         )}
 
         {step === "SAVING" && (
-          <div className="flex flex-col items-center gap-8 animate-in fade-in">
-            <div className="relative">
-              <Loader2 className="w-24 h-24 animate-spin text-white opacity-20" />
-              <Camera className="absolute inset-0 m-auto text-indigo-500 animate-pulse" size={32} />
-            </div>
-            <h2 className="text-4xl font-black italic tracking-widest">SAVING MEMORIES</h2>
+          <div className="flex flex-col items-center gap-10 animate-pulse text-center py-40">
+            <Loader2 className="w-32 h-32 animate-spin text-indigo-500" />
+            <h2 className="text-6xl font-black italic tracking-widest uppercase">Developing</h2>
           </div>
         )}
 
         {step === "RESULT" && (
-          <div className="text-center flex flex-col items-center p-6 w-full max-w-5xl animate-in zoom-in duration-700">
-            <div className={`grid gap-4 mb-16 ${layout === "GRID" ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 lg:grid-cols-4"}`}>
-              {frameSlots.filter(s => !!s).map((src, i) => (
-                <div key={i} onClick={() => setSelectedPhoto(src!)} className="relative aspect-[3/4] bg-neutral-900 rounded-[2.5rem] overflow-hidden border-8 border-white shadow-2xl cursor-zoom-in hover:scale-105 transition-all duration-300">
-                  <img src={src} className="w-full h-full object-cover" alt="Final" />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/20 transition-opacity"><Maximize2 /></div>
-                </div>
-              ))}
+          <div className="text-center flex flex-col items-center p-6 w-full max-w-4xl animate-in zoom-in duration-700 py-10">
+            <h2 className="text-6xl md:text-8xl font-black mb-16 italic tracking-tight uppercase">Your Print</h2>
+            
+            {/* The Unified Composition View */}
+            <div className="bg-white p-10 md:p-14 rounded-[3.5rem] shadow-[0_0_150px_rgba(255,255,255,0.1)] w-full max-w-md transform rotate-1 transition-transform hover:rotate-0 duration-700 mb-20 group">
+              <div className="text-black font-black text-center text-[12px] tracking-[0.6em] border-b-4 border-black/5 pb-10 mb-8 uppercase italic opacity-50">High Gloss Studio Print</div>
+              <div className={`grid gap-5 ${layout === "GRID" ? "grid-cols-2" : "grid-cols-1"}`}>
+                {frameSlots.filter(s => !!s).map((src, i) => (
+                  <div key={i} className={`relative ${layout === "STRIP" ? "aspect-[3/2]" : "aspect-square"} rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5`}>
+                    <img src={src} className="w-full h-full object-cover" alt="Selected" />
+                  </div>
+                ))}
+              </div>
+              <div className="text-black text-[10px] text-center pt-10 opacity-30 font-mono tracking-widest uppercase leading-loose">
+                Unique Session ID: {sessionId?.substring(0, 8).toUpperCase()}<br/>
+                Captured at ProBooth Pro Studio
+              </div>
+              <div className="absolute -right-4 -top-4 bg-indigo-600 text-white p-4 rounded-3xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity"><CheckCircle2 /></div>
             </div>
-            <div className="bg-white p-10 rounded-[4rem] shadow-2xl mb-10 ring-8 ring-white/10">
-              <QRCodeSVG value={`https://be-ptb-production.up.railway.app/view/${sessionId}`} size={280} level="H" includeMargin />
+
+            <div className="bg-white p-12 rounded-[5rem] shadow-2xl mb-12">
+              <QRCodeSVG value={`https://be-ptb-production.up.railway.app/view/${sessionId}`} size={320} level="H" includeMargin />
             </div>
-            <div className="flex items-center gap-3 text-emerald-400 mb-6 bg-emerald-400/5 px-8 py-3 rounded-full border border-emerald-400/10 text-xs font-black uppercase tracking-widest italic">Digital Vault Secured</div>
-            <h2 className="text-6xl font-black mb-16 italic tracking-tight">SCAN TO DOWNLOAD</h2>
-            <button onClick={() => setStep("IDLE")} className="text-neutral-500 hover:text-white transition-all font-black tracking-[0.5em] uppercase text-sm border-b-2 border-white/5 pb-2">Start Again</button>
+            
+            <div className="flex flex-wrap justify-center gap-6 mb-20">
+              <button className="flex items-center gap-3 bg-neutral-900 border border-white/10 px-10 py-5 rounded-full font-black uppercase text-sm hover:bg-white hover:text-black transition-all"><Download /> Download HD</button>
+              <button onClick={() => window.print()} className="flex items-center gap-3 bg-white text-black px-10 py-5 rounded-full font-black uppercase text-sm hover:scale-105 transition-all"><Printer /> Print Photo</button>
+            </div>
+
+            <button onClick={() => setStep("IDLE")} className="text-neutral-600 hover:text-white transition-all font-black tracking-[0.5em] uppercase text-xl border-b-4 border-white/5 pb-4">Next Guest</button>
           </div>
         )}
       </div>
 
-      {/* Lightbox */}
-      {selectedPhoto && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl p-12 flex items-center justify-center animate-in fade-in duration-500" onClick={() => setSelectedPhoto(null)}>
-          <div className="relative max-w-5xl w-full h-full flex items-center justify-center pointer-events-none">
-            <img src={selectedPhoto} className="max-w-full max-h-full object-contain rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.1)] border-2 border-white/10" alt="Fullscreen" />
-            <button className="absolute top-0 right-0 p-10 text-white/20 pointer-events-auto hover:text-white transition-colors"><X size={64} /></button>
-          </div>
-        </div>
-      )}
+      <style jsx global>{`
+        @media print {
+          body * { visibility: hidden; }
+          .max-w-md, .max-w-md * { visibility: visible; }
+          .max-w-md { 
+            position: absolute; 
+            left: 50%; 
+            top: 0; 
+            transform: translateX(-50%) rotate(0) !important; 
+            width: 100% !important;
+            max-width: none !important;
+            box-shadow: none !important;
+          }
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+      `}</style>
     </main>
   );
 }
