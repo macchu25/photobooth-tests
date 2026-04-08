@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Step = "IDLE" | "READY" | "COUNTDOWN" | "FLASH" | "RESULT";
 
@@ -8,10 +8,30 @@ export default function Photobooth() {
   const [step, setStep] = useState<Step>("IDLE");
   const [countdown, setCountdown] = useState(3);
   const [photos, setPhotos] = useState<string[]>([]);
-  
-  // A mock image for when the camera isn't attached yet
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Fallback mock image just in case
   const mockImage = "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=1920&auto=format&fit=crop";
-  const mockLiveFeed = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1920&auto=format&fit=crop";
+
+  useEffect(() => {
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: "user" },
+          audio: false,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err: any) {
+        console.error("Camera access error:", err);
+        setCameraError(err.message || "Failed to access camera");
+      }
+    }
+    setupCamera();
+  }, []);
 
   const startSession = () => {
     setStep("READY");
@@ -31,8 +51,23 @@ export default function Photobooth() {
       } else {
         setStep("FLASH");
         setTimeout(() => {
-          // Mocking the capture action
-          setPhotos([mockImage]);
+          if (videoRef.current && canvasRef.current && !cameraError) {
+            const width = videoRef.current.videoWidth || 1920;
+            const height = videoRef.current.videoHeight || 1080;
+            const ctx = canvasRef.current.getContext("2d");
+            if (ctx) {
+              canvasRef.current.width = width;
+              canvasRef.current.height = height;
+              // Draw the current video frame to the canvas
+              ctx.drawImage(videoRef.current, 0, 0, width, height);
+              // Get the image data
+              const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.9);
+              setPhotos([dataUrl]);
+            }
+          } else {
+            // Fallback to mock image if no camera
+            setPhotos([mockImage]);
+          }
           setStep("RESULT");
         }, 300); // flash duration
       }
@@ -100,9 +135,24 @@ export default function Photobooth() {
 
         {/* Viewfinder Main */}
         <div className="relative flex-1 rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_0_100px_rgba(255,255,255,0.05)] bg-neutral-900 group">
-             {/* Mock Camera Feed Background */}
+             {/* Live Camera Feed */}
              <div className="absolute inset-0 bg-neutral-800">
-                <img src={mockLiveFeed} className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity brightness-75 transition-all duration-1000 group-hover:scale-105" alt="Mock Live Feed" />
+                <video 
+                   ref={videoRef} 
+                   autoPlay 
+                   playsInline 
+                   muted 
+                   className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105"
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {cameraError && (
+                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-black/80 z-20">
+                     <p className="text-xl font-semibold text-red-500 mb-2">Camera Error</p>
+                     <p className="text-neutral-300 text-sm">{cameraError}</p>
+                     <p className="text-neutral-400 text-xs mt-4 max-w-sm">Please ensure your phone or camera is connected and allowed in browser settings.</p>
+                   </div>
+                )}
              </div>
              
              {/* Crosshairs & Grid Lines for Pro Feel */}
