@@ -1,4 +1,6 @@
 "use client";
+// Force push update v2
+
 
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
