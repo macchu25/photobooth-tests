@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Download, Loader2, Image as ImageIcon, Camera } from "lucide-react";
+import { Download, Loader2, Image as ImageIcon, Camera, AlertCircle } from "lucide-react";
 
 export default function GalleryPage() {
   const { id } = useParams();
@@ -12,27 +12,40 @@ export default function GalleryPage() {
 
   useEffect(() => {
     async function fetchSession() {
+      if (!id) return;
+      setLoading(true);
+      setError(null);
+      
       try {
+        // Đảm bảo URL kết thúc bằng ID chính xác
         const res = await fetch(`https://be-ptb-production.up.railway.app/api/sessions/${id}`);
-        // If the backend doesn't have a GET /id endpoint yet, we might need to handle it or use a default
-        if (!res.ok) throw new Error("Không tìm thấy bộ sưu tập này.");
-        const data = await res.ok ? await res.json() : null;
-        if (data && data.photos) {
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || `Lỗi server: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data && data.photos && data.photos.length > 0) {
           setPhotos(data.photos);
+        } else {
+          throw new Error("Bộ sưu tập này không có ảnh hoặc đã bị xóa.");
         }
       } catch (err: any) {
-        setError(err.message);
+        console.error("Fetch error:", err);
+        setError(err.message === "Failed to fetch" ? "Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng." : err.message);
       } finally {
         setLoading(false);
       }
     }
-    if (id) fetchSession();
+    fetchSession();
   }, [id]);
 
   const downloadImage = (src: string, index: number) => {
     const link = document.createElement("a");
     link.href = src;
-    link.download = `probooth-photo-${index + 1}.jpg`;
+    link.download = `probooth-${id}-${index + 1}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -40,52 +53,55 @@ export default function GalleryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-500 mb-4" />
-        <p className="text-neutral-500 font-black tracking-widest uppercase italic">Preparing your gallery...</p>
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white p-6">
+        <Loader2 className="w-12 h-12 animate-spin text-indigo-500 mb-6" />
+        <p className="text-neutral-500 font-black tracking-[0.3em] uppercase italic animate-pulse">Retrieving Memories...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans">
+    <div className="min-h-screen bg-[#050505] text-white p-6 md:p-12 font-sans select-none">
       <div className="max-w-4xl mx-auto">
-        <header className="text-center mb-16 animate-in fade-in slide-in-from-top-8 duration-700">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter italic mb-4">PROBOOTH</h1>
-          <div className="flex items-center justify-center gap-2 text-indigo-500 mb-2">
+        <header className="text-center mb-12 animate-in fade-in slide-in-from-top-10 duration-700">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter italic mb-2">PROBOOTH</h1>
+          <div className="flex items-center justify-center gap-3 text-emerald-500 mb-2">
             <Camera size={20} />
-            <span className="text-sm font-black uppercase tracking-[0.3em]">Official Gallery</span>
+            <span className="text-xs font-black uppercase tracking-[0.4em]">Digital Collection</span>
           </div>
-          <p className="text-neutral-500 text-xs uppercase tracking-widest">Session ID: {id}</p>
+          <p className="text-neutral-700 text-[9px] uppercase tracking-widest font-mono">Archive ID: {id}</p>
         </header>
 
         {error ? (
-          <div className="text-center bg-red-500/10 border border-red-500/20 p-12 rounded-[3rem]">
-            <ImageIcon className="mx-auto text-red-500 mb-4" size={48} />
-            <h2 className="text-2xl font-black mb-2 uppercase">Gallery Not Found</h2>
-            <p className="text-neutral-500">{error}</p>
+          <div className="text-center bg-red-500/5 border border-red-500/10 p-16 rounded-[4rem] animate-in zoom-in">
+            <AlertCircle className="mx-auto text-red-500 mb-6" size={56} />
+            <h2 className="text-3xl font-black mb-4 uppercase italic">Gallery Error</h2>
+            <p className="text-neutral-500 max-w-sm mx-auto leading-relaxed mb-10">{error}</p>
+            <button onClick={() => window.location.reload()} className="bg-white text-black px-10 py-4 rounded-full font-black uppercase text-xs">Try Again</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in zoom-in duration-1000">
             {photos.map((src, i) => (
-              <div key={i} className="group relative bg-neutral-900 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl transition-transform hover:scale-[1.02]">
-                <img src={src} className="w-full h-full object-cover" alt={`Capture ${i+1}`} />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-6">
-                  <button 
+              <div key={i} className="group relative bg-white p-4 rounded-[2.5rem] shadow-2xl transition-all hover:scale-[1.03] hover:-rotate-1">
+                <div className="aspect-[3/4] rounded-[2rem] overflow-hidden bg-neutral-100 ring-1 ring-black/5">
+                  <img src={src} className="w-full h-full object-cover" alt={`Capture ${i+1}`} />
+                </div>
+                <div className="mt-4 flex flex-col items-center">
+                   <button 
                     onClick={() => downloadImage(src, i)}
-                    className="bg-white text-black px-8 py-4 rounded-full font-black flex items-center gap-3 shadow-2xl hover:scale-110 active:scale-95 transition-all"
+                    className="w-full bg-black text-white py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all text-xs uppercase"
                   >
-                    <Download size={20} /> TẢI ẢNH {i+1}
+                    <Download size={16} /> Save to Device
                   </button>
                 </div>
-                <div className="absolute bottom-6 left-6 text-white/50 text-[10px] font-black tracking-[0.2em] italic uppercase">ProBooth // Studio Quality</div>
               </div>
             ))}
           </div>
         )}
 
-        <footer className="mt-24 text-center text-neutral-600">
-          <p className="text-[10px] uppercase tracking-[0.5em] font-black">Memory Vault Powered by MongoDB Atlas</p>
+        <footer className="mt-24 text-center">
+            <div className="h-px bg-white/5 w-24 mx-auto mb-8" />
+            <p className="text-[9px] uppercase tracking-[0.6em] font-black text-neutral-800 italic">Cinematic Photobooth Pro // End of Gallery</p>
         </footer>
       </div>
     </div>
