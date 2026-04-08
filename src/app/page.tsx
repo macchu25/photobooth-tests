@@ -147,6 +147,20 @@ export default function Photobooth() {
     }
   }, [step, countdown, capturedPhotos, maxPhotos]);
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (over?.id.toString().startsWith("slot-")) {
+      const idx = parseInt(over.id.toString().split("-")[1]);
+      const photo = capturedPhotos.find(p => p.id === active.id);
+      if (photo) {
+        const next = [...frameSlots];
+        next[idx] = photo.src;
+        setFrameSlots(next);
+      }
+    }
+  };
+
   const finalizeDesign = async () => {
     const final = frameSlots.filter(s => !!s) as string[];
     if (final.length === 0) return;
@@ -311,7 +325,7 @@ export default function Photobooth() {
             </div>
 
             <div className="bg-white p-10 rounded-[4rem] shadow-2xl mb-12">
-              <QRCodeSVG value={`https://be-ptb-production.up.railway.app/view/${sessionId}`} size={280} level="H" includeMargin />
+              <QRCodeSVG value={`${window.location.origin}/view/${sessionId}`} size={280} level="H" includeMargin />
             </div>
             <div className="flex gap-4 mb-20">
                <button onClick={() => window.print()} className="bg-white text-black px-10 py-5 rounded-full font-black text-sm hover:scale-105 transition-all flex items-center gap-2"><Printer size={18} /> PRINT NOW</button>
