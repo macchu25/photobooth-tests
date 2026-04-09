@@ -145,31 +145,31 @@ export default function DesignPage() {
 
           {/* COMPOSITION - Bottom on mobile, Right on PC */}
           <div className="w-full lg:w-[320px] xl:w-[400px] flex flex-col shrink-0 h-fit lg:h-full overflow-visible lg:overflow-hidden pb-8 lg:pb-0">
-            <div className={`flex-1 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl flex flex-col relative overflow-y-auto lg:overflow-hidden items-center shrink-0 transition-colors duration-500 min-h-[500px]`} style={{ backgroundColor: frameColor }}>
+            <div className={`flex-1 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl flex flex-col relative overflow-y-auto lg:overflow-y-auto items-center shrink-0 transition-colors duration-500 w-full min-h-[700px]`} style={{ backgroundColor: frameColor }}>
               <div className={`font-black text-center text-[8px] tracking-[0.4em] border-b pb-4 mb-4 uppercase italic opacity-30 leading-none shrink-0 w-full ${frameColor === "black" ? "text-white border-white/10" : "text-black border-black/5"}`}>Studio Print Edition</div>
               
               <div className={`
                 ${layout === "GRID" ? "grid grid-cols-2 gap-2" : ""}
                 ${layout === "STRIP" ? "flex flex-col gap-2" : ""}
-                ${layout === "POLAROID" ? "relative w-full h-[600px] overflow-visible" : ""}
-                ${layout === "POSTER" ? "flex flex-col gap-6 items-center py-4" : ""}
+                ${layout === "POLAROID" ? "relative w-full h-[900px] overflow-visible" : ""}
+                ${layout === "POSTER" ? "flex flex-col gap-10 items-center py-8" : ""}
                 ${layout === "WALL" ? "grid grid-cols-2 gap-x-4 gap-y-12 pt-8" : ""}
-                w-full items-center scrollbar-hide
+                w-full items-center scrollbar-hide shrink-0
               `}>
                 {frameSlots.map((src, i) => {
                   let customStyle: React.CSSProperties = {};
-                  const shadow = "shadow-[0_10px_30px_rgba(0,0,0,0.15)]";
+                  const shadow = "shadow-[0_15px_40px_rgba(0,0,0,0.2)]";
 
                   if (layout === "POLAROID") {
-                    // Spread them out more organically
-                    const rotations = [-4, 5, -2, 3, -6, 4];
+                    // Much more spread out
+                    const rotations = [-6, 7, -3, 5, -8, 4];
                     const positions = [
-                      { top: '0px', left: '35%' },
-                      { top: '40px', left: '65%' },
-                      { top: '160px', left: '40%' },
-                      { top: '220px', left: '70%' },
-                      { top: '340px', left: '30%' },
-                      { top: '380px', left: '60%' },
+                      { top: '0px', left: '30%' },
+                      { top: '180px', left: '70%' },
+                      { top: '360px', left: '35%' },
+                      { top: '540px', left: '65%' },
+                      { top: '720px', left: '40%' },
+                      { top: '900px', left: '60%' },
                     ];
                     const pos = positions[i % positions.length];
                     customStyle = {
@@ -178,27 +178,28 @@ export default function DesignPage() {
                       left: pos.left,
                       transform: `translateX(-50%) rotate(${rotations[i % rotations.length]}deg)`,
                       zIndex: i,
-                      width: '150px',
-                      height: '180px',
-                      padding: '6px 6px 24px 6px',
+                      width: '180px',
+                      height: '220px',
+                      padding: '10px 10px 35px 10px',
                       backgroundColor: 'white',
                     };
                   }
                   if (layout === "POSTER") {
-                    const rotations = [1, -1, 1.5, -1.5, 2];
+                    const rotations = [2, -2, 1.5, -1.5, 3];
                     customStyle = {
                       transform: `rotate(${rotations[i % rotations.length]}deg)`,
-                      width: '220px',
-                      padding: '10px 10px 40px 10px',
+                      width: '240px',
+                      padding: '12px 12px 48px 12px',
                       backgroundColor: 'white',
                     };
                   }
                   if (layout === "WALL") {
-                    const rotations = [-2, 2, -1, 3, -3, 1];
+                    const rotations = [-3, 3, -2, 4, -4, 2];
                     customStyle = {
                       transform: `rotate(${rotations[i % rotations.length]}deg)`,
                       backgroundColor: 'white',
-                      padding: '6px 6px 20px 6px',
+                      padding: '8px 8px 24px 8px',
+                      width: '140px'
                     };
                   }
 
