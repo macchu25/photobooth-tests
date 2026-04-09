@@ -145,45 +145,52 @@ export default function DesignPage() {
 
           {/* COMPOSITION - Bottom on mobile, Right on PC */}
           <div className="w-full lg:w-[320px] xl:w-[400px] flex flex-col shrink-0 h-fit lg:h-full overflow-visible lg:overflow-hidden pb-8 lg:pb-0">
-            <div className="flex-1 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl flex flex-col relative overflow-hidden items-center shrink-0 transition-colors duration-500" style={{ backgroundColor: frameColor }}>
+            <div className={`flex-1 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl flex flex-col relative overflow-y-auto lg:overflow-hidden items-center shrink-0 transition-colors duration-500 min-h-[500px]`} style={{ backgroundColor: frameColor }}>
               <div className={`font-black text-center text-[8px] tracking-[0.4em] border-b pb-4 mb-4 uppercase italic opacity-30 leading-none shrink-0 w-full ${frameColor === "black" ? "text-white border-white/10" : "text-black border-black/5"}`}>Studio Print Edition</div>
               
               <div className={`
                 ${layout === "GRID" ? "grid grid-cols-2 gap-2" : ""}
                 ${layout === "STRIP" ? "flex flex-col gap-2" : ""}
-                ${layout === "POLAROID" ? "relative w-full h-[400px] overflow-visible" : ""}
-                ${layout === "POSTER" ? "flex flex-col gap-2 items-center" : ""}
+                ${layout === "POLAROID" ? "relative w-full h-[600px] overflow-visible" : ""}
+                ${layout === "POSTER" ? "flex flex-col gap-6 items-center py-4" : ""}
                 ${layout === "WALL" ? "grid grid-cols-2 gap-x-4 gap-y-12 pt-8" : ""}
                 w-full items-center scrollbar-hide
               `}>
                 {frameSlots.map((src, i) => {
-                  let customStyle = {};
+                  let customStyle: React.CSSProperties = {};
+                  const shadow = "shadow-[0_10px_30px_rgba(0,0,0,0.15)]";
+
                   if (layout === "POLAROID") {
-                    const rotations = [-5, 3, -2, 5, -8, 6];
-                    const offsetsX = [0, 10, -5, 15, -10, 5];
-                    const offsetsY = [0, 20, 60, 100, 140, 180];
+                    // Spread them out more organically
+                    const rotations = [-4, 5, -2, 3, -6, 4];
+                    const positions = [
+                      { top: '0px', left: '35%' },
+                      { top: '40px', left: '65%' },
+                      { top: '160px', left: '40%' },
+                      { top: '220px', left: '70%' },
+                      { top: '340px', left: '30%' },
+                      { top: '380px', left: '60%' },
+                    ];
+                    const pos = positions[i % positions.length];
                     customStyle = {
                       position: 'absolute',
-                      top: `${offsetsY[i % offsetsY.length]}px`,
-                      left: `calc(50% + ${offsetsX[i % offsetsX.length]}px)`,
+                      top: pos.top,
+                      left: pos.left,
                       transform: `translateX(-50%) rotate(${rotations[i % rotations.length]}deg)`,
                       zIndex: i,
-                      width: '180px',
-                      height: '220px',
-                      padding: '8px 8px 30px 8px',
+                      width: '150px',
+                      height: '180px',
+                      padding: '6px 6px 24px 6px',
                       backgroundColor: 'white',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                     };
                   }
                   if (layout === "POSTER") {
-                    const rotations = [2, -2, 1, -1, 3];
+                    const rotations = [1, -1, 1.5, -1.5, 2];
                     customStyle = {
                       transform: `rotate(${rotations[i % rotations.length]}deg)`,
-                      width: '200px',
+                      width: '220px',
                       padding: '10px 10px 40px 10px',
                       backgroundColor: 'white',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                      marginBottom: '-20px'
                     };
                   }
                   if (layout === "WALL") {
@@ -192,13 +199,14 @@ export default function DesignPage() {
                       transform: `rotate(${rotations[i % rotations.length]}deg)`,
                       backgroundColor: 'white',
                       padding: '6px 6px 20px 6px',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                      position: 'relative'
                     };
                   }
 
                   return (
-                    <div key={i} style={customStyle} className={layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? "relative border border-neutral-100" : ""}>
+                    <div key={i} style={customStyle} className={`
+                      ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? `relative border border-neutral-100 ${shadow}` : ""}
+                      transition-transform duration-300
+                    `}>
                       {layout === "WALL" && (
                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-4 h-8 bg-neutral-800 rounded z-20 shadow-sm" />
                       )}
@@ -212,7 +220,7 @@ export default function DesignPage() {
                         }} 
                       />
                       {layout === "POSTER" && i % 2 === 0 && (
-                        <div className="absolute top-2 right-2 text-red-500 opacity-50">❤</div>
+                        <div className="absolute top-2 right-2 text-red-500 opacity-50"><Heart size={14} fill="currentColor" /></div>
                       )}
                     </div>
                   );

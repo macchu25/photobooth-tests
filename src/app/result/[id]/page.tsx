@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { Printer, RotateCcw, Download, CheckCircle2 } from "lucide-react";
+import { Printer, RotateCcw, Download, CheckCircle2, Heart } from "lucide-react";
 import { usePhotobooth } from "@/context/PhotoboothContext";
 import { useEffect, useState } from "react";
 
@@ -31,39 +31,45 @@ export default function ResultPage() {
             <div className={`
               ${layout === "GRID" ? "grid grid-cols-2 gap-2" : ""}
               ${layout === "STRIP" ? "flex flex-col gap-2" : ""}
-              ${layout === "POLAROID" ? "relative w-[280px] md:w-[350px] h-[350px] md:h-[450px]" : ""}
-              ${layout === "POSTER" ? "flex flex-col gap-2" : ""}
+              ${layout === "POLAROID" ? "relative w-[300px] md:w-[350px] h-[450px] md:h-[550px]" : ""}
+              ${layout === "POSTER" ? "flex flex-col gap-6 py-4" : ""}
               ${layout === "WALL" ? "grid grid-cols-2 gap-x-4 gap-y-12 pt-8" : ""}
               overflow-y-auto scrollbar-hide shrink items-center
             `}>
               {frameSlots.filter(s => !!s).map((src, i) => {
-                let customStyle = {};
+                let customStyle: React.CSSProperties = {};
+                const shadow = "shadow-[0_10px_30px_rgba(0,0,0,0.15)]";
+
                 if (layout === "POLAROID") {
-                  const rotations = [-5, 3, -2, 5, -8, 6];
-                  const offsetsX = [0, 10, -5, 15, -10, 5];
-                  const offsetsY = [0, 20, 60, 100, 140, 180];
+                  const rotations = [-4, 5, -2, 3, -6, 4];
+                  const positions = [
+                    { top: '0px', left: '35%' },
+                    { top: '40px', left: '65%' },
+                    { top: '160px', left: '40%' },
+                    { top: '220px', left: '70%' },
+                    { top: '340px', left: '30%' },
+                    { top: '380px', left: '60%' },
+                  ];
+                  const pos = positions[i % positions.length];
                   customStyle = {
                     position: 'absolute',
-                    top: `${offsetsY[i % offsetsY.length]}px`,
-                    left: `calc(50% + ${offsetsX[i % offsetsX.length]}px)`,
+                    top: pos.top,
+                    left: pos.left,
                     transform: `translateX(-50%) rotate(${rotations[i % rotations.length]}deg)`,
                     zIndex: i,
-                    width: '160px',
-                    height: '200px',
-                    padding: '8px 8px 30px 8px',
+                    width: '140px',
+                    height: '170px',
+                    padding: '6px 6px 24px 6px',
                     backgroundColor: 'white',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                   };
                 }
                 if (layout === "POSTER") {
-                  const rotations = [2, -2, 1, -1, 3];
+                  const rotations = [1, -1, 1.5, -1.5, 2];
                   customStyle = {
                     transform: `rotate(${rotations[i % rotations.length]}deg)`,
                     width: '180px',
                     padding: '8px 8px 32px 8px',
                     backgroundColor: 'white',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                    marginBottom: '-15px'
                   };
                 }
                 if (layout === "WALL") {
@@ -72,13 +78,13 @@ export default function ResultPage() {
                     transform: `rotate(${rotations[i % rotations.length]}deg)`,
                     backgroundColor: 'white',
                     padding: '6px 6px 20px 6px',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    position: 'relative'
                   };
                 }
 
                 return (
-                  <div key={i} style={customStyle} className={layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? "relative border border-neutral-100" : ""}>
+                  <div key={i} style={customStyle} className={`
+                    ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? `relative border border-neutral-100 ${shadow}` : ""}
+                  `}>
                     {layout === "WALL" && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-6 bg-neutral-800 rounded z-20 shadow-sm" />
                     )}
@@ -90,7 +96,9 @@ export default function ResultPage() {
                       <img src={src} className="w-full h-full object-cover" alt="Selected" />
                     </div>
                     {layout === "POSTER" && i % 2 === 0 && (
-                      <div className="absolute top-1 right-1 text-red-500 scale-75 opacity-40">❤</div>
+                      <div className="absolute top-1 right-1 text-red-500 scale-75 opacity-40">
+                        <Heart size={14} fill="currentColor" />
+                      </div>
                     )}
                   </div>
                 );
