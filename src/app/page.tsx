@@ -39,7 +39,7 @@ export default function WelcomePage() {
         <p className="text-xl text-neutral-500 tracking-[0.6em] uppercase mb-16">Cinematic Studio Experience</p>
         <button 
           onClick={() => router.push("/package")} 
-          className="bg-white text-black px-24 py-10 rounded-full font-black text-4xl hover:scale-110 active:scale-95 transition-all shadow-[0_0_80px_rgba(255,255,255,0.2)] flex items-center gap-4"
+          className="mx-auto bg-white text-black px-24 py-10 rounded-full font-black text-4xl hover:scale-110 active:scale-95 transition-all shadow-[0_0_80px_rgba(255,255,255,0.2)] flex items-center gap-4"
         >
           START <ChevronRight size={48} />
         </button>

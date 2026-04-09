@@ -11,10 +11,38 @@ export default function ResultPage() {
   const router = useRouter();
   const { frameSlots, layout, maxPhotos, frameColor } = usePhotobooth();
   const [origin, setOrigin] = useState("");
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     setOrigin(window.location.origin);
-  }, []);
+    
+    const handleResize = () => {
+      const vh = window.innerHeight * 0.85;
+      // Estimate content height based on layout
+      let contentHeight = 600; 
+      if (layout === "POLAROID") contentHeight = 1100;
+      if (layout === "POSTER") contentHeight = 250 * maxPhotos + 100;
+      if (layout === "STRIP") contentHeight = 150 * maxPhotos + 100;
+      if (layout === "STRING") contentHeight = 500; // Fixed height, but width is large
+
+      let s = 1;
+      if (contentHeight > vh) s = vh / contentHeight;
+
+      if (layout === "STRING") {
+        const vw = window.innerWidth * 0.9;
+        const contentWidth = 180 * maxPhotos + 200;
+        if (contentWidth > vw) {
+          s = Math.min(s, vw / contentWidth);
+        }
+      }
+
+      setScale(s);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [layout, maxPhotos]);
 
   // Calculate photo height based on count for responsiveness
   const photoHeight = maxPhotos > 6 ? "h-[50px] md:h-[60px] lg:h-[70px]" : "h-[80px] md:h-[100px] lg:h-[120px]";
@@ -24,8 +52,15 @@ export default function ResultPage() {
       <div className="w-full h-full max-w-7xl flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20 animate-in zoom-in duration-500 overflow-visible lg:overflow-hidden py-10 lg:py-0">
         
         {/* LEFT: Finished Product */}
-        <div className="w-full lg:flex-1 flex flex-col items-center justify-center h-fit lg:h-full max-h-none lg:max-h-[85vh] overflow-visible lg:overflow-hidden select-none">
-          <div className="p-6 md:p-10 rounded-[2.5rem] shadow-[0_0_100px_rgba(255,255,255,0.05)] w-fit flex flex-col items-center overflow-hidden transform lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-700 h-fit max-h-none lg:max-h-full" style={{ backgroundColor: frameColor }}>
+        <div className="w-full lg:flex-1 flex flex-col items-center justify-center h-fit lg:h-full select-none overflow-hidden">
+          <div 
+            style={{ 
+              backgroundColor: frameColor,
+              transform: `scale(${scale})`,
+              transformOrigin: "center center"
+            }} 
+            className="p-6 md:p-10 rounded-[2.5rem] shadow-[0_0_100px_rgba(255,255,255,0.05)] w-fit flex flex-col items-center overflow-hidden transition-all duration-700 h-fit"
+          >
             <div className={`font-black text-center text-[8px] md:text-[10px] tracking-[0.4em] border-b-2 pb-4 mb-4 uppercase italic opacity-30 shrink-0 w-full ${frameColor === "black" ? "text-white border-white/10" : "text-black border-black/5"}`}>Studio Print Edition</div>
             
             <div className={`
@@ -34,8 +69,10 @@ export default function ResultPage() {
               ${layout === "POLAROID" ? "relative w-[320px] md:w-[400px] h-[950px] md:h-[1100px]" : ""}
               ${layout === "POSTER" ? "flex flex-col gap-10 py-8" : ""}
               ${layout === "WALL" ? "grid grid-cols-2 gap-x-4 gap-y-12 pt-8" : ""}
-              overflow-y-auto scrollbar-hide shrink items-center
+              ${layout === "STRING" ? "flex flex-row gap-8 px-12 py-20 min-w-max relative" : ""}
+              scrollbar-hide shrink items-center
             `}>
+              {layout === "STRING" && <div className="absolute top-[120px] left-0 right-0 h-1 bg-black/10 border-b border-black/5 z-0" />}
               {frameSlots.filter(s => !!s).map((src, i) => {
                 let customStyle: React.CSSProperties = {};
                 const shadow = "shadow-[0_15px_40px_rgba(0,0,0,0.2)]";
@@ -81,18 +118,29 @@ export default function ResultPage() {
                     width: '130px'
                   };
                 }
+                if (layout === "STRING") {
+                  const rotations = [-4, 3, -1, 5, -2, 4];
+                  customStyle = {
+                    transform: `rotate(${rotations[i % rotations.length]}deg) translateY(${i % 2 === 0 ? '0px' : '20px'})`,
+                    backgroundColor: 'white',
+                    padding: '8px 8px 30px 8px',
+                    width: '150px',
+                    flexShrink: 0,
+                    position: 'relative'
+                  };
+                }
 
                 return (
                   <div key={i} style={customStyle} className={`
-                    ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? `relative border border-neutral-100 ${shadow}` : ""}
+                    ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" || layout === "STRING" ? `relative border border-neutral-100 ${shadow}` : ""}
                   `}>
-                    {layout === "WALL" && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-6 bg-neutral-800 rounded z-20 shadow-sm" />
+                    {(layout === "WALL" || layout === "STRING") && (
+                      <div className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded shadow-sm z-20 ${layout === "WALL" ? "w-3 h-6 bg-neutral-800" : "w-2 h-8 bg-orange-900/80 border border-orange-950/20"}`} />
                     )}
                     <div className={`relative shadow-inner overflow-hidden rounded-lg bg-neutral-100 
                       ${layout === "STRIP" ? `aspect-[3/2] ${photoHeight}` : ""}
                       ${layout === "GRID" ? "aspect-square w-24 md:w-32 lg:w-40" : ""}
-                      ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? "aspect-square w-full" : ""}
+                      ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" || layout === "STRING" ? "aspect-square w-full" : ""}
                     `}>
                       <img src={src} className="w-full h-full object-cover" alt="Selected" />
                     </div>

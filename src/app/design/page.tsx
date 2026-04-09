@@ -22,7 +22,8 @@ import {
   RotateCcw,
   Loader2,
   Heart,
-  CheckCircle2
+  CheckCircle2,
+  Share2
 } from "lucide-react";
 import { usePhotobooth } from "@/context/PhotoboothContext";
 
@@ -123,6 +124,7 @@ export default function DesignPage() {
                   <button onClick={() => setLayout("POLAROID")} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-[8px] md:text-[9px] font-black uppercase transition-all ${layout === "POLAROID" ? "bg-white text-black" : "text-neutral-500"}`}><Camera size={12} /> Polaroid</button>
                   <button onClick={() => setLayout("POSTER")} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-[8px] md:text-[9px] font-black uppercase transition-all ${layout === "POSTER" ? "bg-white text-black" : "text-neutral-500"}`}><CheckCircle2 size={12} /> Poster</button>
                   <button onClick={() => setLayout("WALL")} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-[8px] md:text-[9px] font-black uppercase transition-all ${layout === "WALL" ? "bg-white text-black" : "text-neutral-500"}`}><Heart size={12} /> Wall</button>
+                  <button onClick={() => setLayout("STRING")} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-[8px] md:text-[9px] font-black uppercase transition-all ${layout === "STRING" ? "bg-white text-black" : "text-neutral-500"}`}><Share2 size={12} /> String</button>
                 </div>
 
                 {/* Color Swatcher */}
@@ -154,8 +156,10 @@ export default function DesignPage() {
                 ${layout === "POLAROID" ? "relative w-full h-[900px] overflow-visible" : ""}
                 ${layout === "POSTER" ? "flex flex-col gap-10 items-center py-8" : ""}
                 ${layout === "WALL" ? "grid grid-cols-2 gap-x-4 gap-y-12 pt-8" : ""}
+                ${layout === "STRING" ? "flex flex-row gap-8 px-12 py-20 min-w-max relative" : ""}
                 w-full items-center scrollbar-hide shrink-0
               `}>
+                {layout === "STRING" && <div className="absolute top-[120px] left-0 right-0 h-1 bg-white/20 border-b border-white/10 z-0" />}
                 {frameSlots.map((src, i) => {
                   let customStyle: React.CSSProperties = {};
                   const shadow = "shadow-[0_15px_40px_rgba(0,0,0,0.2)]";
@@ -202,14 +206,25 @@ export default function DesignPage() {
                       width: '140px'
                     };
                   }
+                  if (layout === "STRING") {
+                    const rotations = [-4, 3, -1, 5, -2, 4];
+                    customStyle = {
+                      transform: `rotate(${rotations[i % rotations.length]}deg) translateY(${i % 2 === 0 ? '0px' : '20px'})`,
+                      backgroundColor: 'white',
+                      padding: '8px 8px 30px 8px',
+                      width: '150px',
+                      flexShrink: 0,
+                      position: 'relative'
+                    };
+                  }
 
                   return (
                     <div key={i} style={customStyle} className={`
-                      ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" ? `relative border border-neutral-100 ${shadow}` : ""}
+                      ${layout === "POLAROID" || layout === "POSTER" || layout === "WALL" || layout === "STRING" ? `relative border border-neutral-100 ${shadow}` : ""}
                       transition-transform duration-300
                     `}>
-                      {layout === "WALL" && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-4 h-8 bg-neutral-800 rounded z-20 shadow-sm" />
+                      {(layout === "WALL" || layout === "STRING") && (
+                        <div className={`absolute -top-4 left-1/2 -translate-x-1/2 rounded shadow-sm z-20 ${layout === "WALL" ? "w-4 h-8 bg-neutral-800" : "w-3 h-10 bg-orange-900/80 border border-orange-950/20"}`} />
                       )}
                       <DroppableSlot 
                         id={`slot-${i}`} 

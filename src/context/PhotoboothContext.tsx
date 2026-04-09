@@ -9,8 +9,8 @@ type PhotoboothContextType = {
   setCapturedPhotos: (photos: { id: string; src: string }[]) => void;
   frameSlots: (string | undefined)[];
   setFrameSlots: (slots: (string | undefined)[]) => void;
-  layout: "GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL";
-  setLayout: (l: "GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL") => void;
+  layout: "GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL" | "STRING";
+  setLayout: (l: "GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL" | "STRING") => void;
   frameColor: string;
   setFrameColor: (c: string) => void;
   resetSession: () => void;
@@ -22,7 +22,7 @@ export function PhotoboothProvider({ children }: { children: ReactNode }) {
   const [maxPhotos, setMaxPhotos] = useState<number>(4);
   const [capturedPhotos, setCapturedPhotos] = useState<{ id: string; src: string }[]>([]);
   const [frameSlots, setFrameSlots] = useState<(string | undefined)[]>([]);
-  const [layout, setLayout] = useState<"GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL">("GRID");
+  const [layout, setLayout] = useState<"GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL" | "STRING">("GRID");
   const [frameColor, setFrameColor] = useState<string>("white");
 
   const resetSession = () => {
