@@ -25,6 +25,32 @@ export function PhotoboothProvider({ children }: { children: ReactNode }) {
   const [layout, setLayout] = useState<"GRID" | "STRIP" | "POLAROID" | "POSTER" | "WALL" | "STRING">("GRID");
   const [frameColor, setFrameColor] = useState<string>("white");
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from session storage on mount
+  React.useEffect(() => {
+    const saved = sessionStorage.getItem("probooth_session");
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.capturedPhotos) setCapturedPhotos(data.capturedPhotos);
+        if (data.frameSlots) setFrameSlots(data.frameSlots);
+        if (data.layout) setLayout(data.layout);
+        if (data.frameColor) setFrameColor(data.frameColor);
+      } catch (e) { console.error("Session load error", e); }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save to session storage when state changes - only after initialization
+  React.useEffect(() => {
+    if (isInitialized) {
+      sessionStorage.setItem("probooth_session", JSON.stringify({
+        capturedPhotos, frameSlots, layout, frameColor
+      }));
+    }
+  }, [capturedPhotos, frameSlots, layout, frameColor, isInitialized]);
+
   const resetSession = () => {
     setCapturedPhotos([]);
     setFrameSlots([]);

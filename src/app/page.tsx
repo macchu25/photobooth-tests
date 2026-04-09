@@ -11,7 +11,6 @@ export default function WelcomePage() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    resetSession();
     // Background camera
     async function setupCamera() {
       try {
